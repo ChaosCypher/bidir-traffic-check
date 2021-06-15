@@ -26,7 +26,7 @@ function checkSudo () {
 # populates an array of network interfaces
 function getInterfaces () {
     if (( ${#INTERFACES[@]} < 1 )); then
-        for iface in "$(find /sys/class/net ! -type d -printf '%f\n')"; do
+        for iface in /sys/class/net/*; do
             INTERFACES+=("$iface")
         done
     fi
@@ -36,7 +36,7 @@ function getInterfaces () {
 function ignoreInterfaces() {
     if (( ${#IGNORE_INTERFACES[@]} >= 1 )); then
         for iface in "${IGNORE_INTERFACES[@]}"; do
-            INTERFACES=( "${INTERFACES[@]/$iface/}" )
+            INTERFACES=( "${INTERFACES[@]/*$iface/}" )
         done
     fi
 }
