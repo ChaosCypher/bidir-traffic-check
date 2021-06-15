@@ -32,7 +32,7 @@ function getInterfaces () {
     fi
 }
 
-# removes network interfaces that are in the ignore array
+# removes network interfaces that are in the ignore array from the interfaces array
 function ignoreInterfaces() {
     if (( ${#IGNORE_INTERFACES[@]} >= 1 )); then
         for iface in "${IGNORE_INTERFACES[@]}"; do
@@ -41,7 +41,16 @@ function ignoreInterfaces() {
     fi
 }
 
-# function removeDownInterfaces () {}
+# finds interfaces marked as down and removes them from the interfaces array
+function removeDownInterfaces () {
+    for iface in "${INTERFACES[@]}"; do
+        if [[ -n "${iface}" ]]; then
+            if grep -q down "$iface/operstate"; then
+                INTERFACES=( "${INTERFACES[@]/*$iface/}" )
+            fi
+        fi
+    done
+}
 
 # function checkTraffic () {
 # }
@@ -55,3 +64,4 @@ function ignoreInterfaces() {
 checkSudo
 getInterfaces
 ignoreInterfaces
+removeDownInterfaces
