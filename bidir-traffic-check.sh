@@ -3,6 +3,9 @@
 # add path to tcpdump (if empty defaults to $PATH)
 TCPDUMP_PATH=
 
+# set the network interfaces automatically found and are in status up
+AUTO_INTERFACES=()
+
 # set the network interfaces to check (if empty defaults to all interfaces)
 INTERFACES=()
 
@@ -45,23 +48,28 @@ function ignoreInterfaces() {
 function removeDownInterfaces () {
     for iface in "${INTERFACES[@]}"; do
         if [[ -n "${iface}" ]]; then
-            if grep -q down "$iface/operstate"; then
-                INTERFACES=( "${INTERFACES[@]/*$iface/}" )
+            if grep -q up "$iface/operstate"; then
+                AUTO_INTERFACES+=("$iface")
             fi
         fi
     done
 }
 
-# function checkTraffic () {
-# }
-
-# function main () {
-#     checkSudo()
-# }
-
-# main()
+function checkTraffic () {
+    for iface in "${AUTO_INTERFACES[@]}"; do
+        tcpdump -n -m $iface tcp -c 50 2> /dev/null | awk '{{src[NR]=$3} {dst[NR]=substr($5, 1, length($5)-1)}};END \
+                                                           {for (i=1;i<=NR;i++) \
+                                                               {for (j=1;j<=NR;j++) \
+                                                                   {if (src[i] == dst[j] && src[i] != "") \
+                                                                       { if (dst[i] == src[j]) \
+                                                                           { print "Bi-Directional communication found on '$iface'\n" \
+                                                                    src[i] " -> " dst[i] "\n" src[j] " -> " dst[j]; exit}}}} \
+                                                                    print "Bi-Directional communication not found on '$iface'"}'
+    done
+}
 
 checkSudo
 getInterfaces
 ignoreInterfaces
 removeDownInterfaces
+checkTraffic
