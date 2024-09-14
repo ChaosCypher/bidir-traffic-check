@@ -1,0 +1,48 @@
+---
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, edited]
+
+permissions: {}
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+      statuses: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Super-linter
+        uses: super-linter/super-linter/slim@v7.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test:
+    needs: lint
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        shell: bash
+        run: |
+          chmod +x bidir-traffic-check.sh \
+                   test-bidir-traffic-check.sh
+
+          sudo ./test-bidir-traffic-check.sh
